@@ -77,7 +77,7 @@ module.exports = async function handler(req, res) {
 // ─── Add to wishlist ──────────────────────────────────────────────────────────
 async function addToWishlist(req, res) {
   const {
-    phone, product_id, product_title,
+    phone, product_id, product_title, customer_name,
     product_handle, variant_id, product_image, product_price,
   } = req.body || {};
 
@@ -109,6 +109,7 @@ async function addToWishlist(req, res) {
     {
       fields: [
         { key: 'phone',           value: cleanPhone },
+        { key: 'customer_name',   value: customer_name   || '' },
         { key: 'product_id',      value: String(product_id) },
         { key: 'product_title',   value: product_title   || '' },
         { key: 'product_handle',  value: product_handle  || '' },
