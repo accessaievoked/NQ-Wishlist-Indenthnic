@@ -121,7 +121,11 @@ async function addToWishlist(req, res) {
   );
 
   const errors = data.metaobjectCreate.userErrors;
-  if (errors.length) return res.status(400).json({ error: errors });
+  if (errors.length) {
+    const message = errors.map(e => `${e.field ? e.field.join('.') + ': ' : ''}${e.message}`).join('; ');
+    console.error('[Wishlist] metaobjectCreate userErrors:', JSON.stringify(errors));
+    return res.status(400).json({ error: message });
+  }
 
   return res.status(201).json({
     success: true,
