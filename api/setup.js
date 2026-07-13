@@ -51,6 +51,7 @@ module.exports = async function handler(req, res) {
           displayNameKey: 'product_title',
           fieldDefinitions: [
             { key: 'phone',          name: 'Customer Phone',   type: 'single_line_text_field',  required: true  },
+            { key: 'customer_name',  name: 'Customer Name',    type: 'single_line_text_field',  required: true  },
             { key: 'product_id',     name: 'Product ID',       type: 'single_line_text_field',  required: true  },
             { key: 'product_title',  name: 'Product Title',    type: 'single_line_text_field',  required: false },
             { key: 'product_handle', name: 'Product Handle',   type: 'single_line_text_field',  required: false },
