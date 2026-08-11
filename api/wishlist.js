@@ -5,6 +5,31 @@ const SHOPIFY_STORE = process.env.SHOPIFY_STORE_URL;   // yourstore.myshopify.co
 const SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 const API_SECRET = process.env.WISHLIST_API_SECRET || '';
+const SPUR_WEBHOOK_URL = process.env.SPUR_WEBHOOK_URL || ''; // Spur "Webhook" trigger URL, e.g. https://api.spurnow.com/profiles/2/workflows/60/webhooks
+
+// ─── Fire the Spur WhatsApp trigger (fire-and-forget) ─────────────────────────
+// Spur only needs `phone` + `name` to know who to message; everything else you
+// send becomes a `{{trigger.<key>}}` variable you can drop into the WhatsApp
+// template inside the Spur flow builder. This never blocks or fails the
+// wishlist request — if Spur is down or misconfigured, the wishlist add still
+// succeeds; we just log the problem.
+function triggerWhatsAppMessage(payload) {
+  if (!SPUR_WEBHOOK_URL) return; // not configured — silently skip
+
+  fetch(SPUR_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(res => {
+      if (!res.ok) {
+        console.error('[Spur Webhook] Non-OK response:', res.status);
+      }
+    })
+    .catch(err => {
+      console.error('[Spur Webhook] Failed to trigger:', err.message);
+    });
+}
 
 // ─── Shopify GraphQL helper ───────────────────────────────────────────────────
 async function gql(query, variables = {}) {
@@ -127,6 +152,17 @@ async function addToWishlist(req, res) {
     console.error('[Wishlist] metaobjectCreate userErrors:', JSON.stringify(errors));
     return res.status(400).json({ error: message });
   }
+
+  // New entry only (not a repeat click) — send the WhatsApp wishlist-confirmation trigger.
+  triggerWhatsAppMessage({
+    phone:          cleanPhone,
+    name:           customer_name || 'there',
+    product_title:  product_title  || '',
+    product_handle: product_handle || '',
+    product_image:  product_image  || '',
+    product_price:  product_price  || '',
+    product_url:    product_handle ? `https://${SHOPIFY_STORE}/products/${product_handle}` : '',
+  });
 
   return res.status(201).json({
     success: true,
